@@ -108,6 +108,7 @@ app.post('/api/persons', (request, response) => {
 })
 
 // More custom Middleware
+// This will be called if no routes above can handle the incoming request
 const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
 }
