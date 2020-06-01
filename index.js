@@ -1,6 +1,25 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
+const mongoose = require('mongoose')
+
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+
+const contactSchema = new mongoose.Schema({
+    name: String,
+    number: String
+})
+
+contactSchema.set("toJSON", {
+    transform: (document, returnedContact) => {
+        returnedContact.id = returnedContact._id.toString()
+        delete returnedContact._id
+        delete returnedContact.__v
+    }
+})
+
+const Contact = mongoose.model('Contact', contactSchema)
 
 app = express()
 app.use(express.json())
@@ -11,7 +30,7 @@ morgan.token('body', (req, res) => { return JSON.stringify(req.body) })
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-let persons = [
+/* let persons = [
     {
         "name": "Arto Hellas",
         "number": "040-123456",
@@ -37,7 +56,7 @@ let persons = [
         "number": "040-5489468",
         "id": 6
     }
-]
+] */
 
 const generateId = () => {
     const ids = persons.map(person => person.id)
@@ -56,13 +75,17 @@ const requestLogger = (request, response, next) => {
 //app.use(requestLogger)
 
 app.get('/info', (request, response) => {
-    response.send(
-        `<p>Phonebook has info for ${persons.length} people.</p><p>${new Date().toString()}</p>`
-    )
+    Contact.countDocuments({}).then((count) => {
+        response.send(`<p>Phonebook has info for ${count} people.</p><p>${new Date().toString()}</p>`)
+        mongoose.connection.close()
+    })
 })
 
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    Contact.find({}).then(contacts => {
+        response.json(contacts)
+        mongoose.connection.close()
+    })
 })
 
 app.get('/api/persons/:id', (request, response) => {
