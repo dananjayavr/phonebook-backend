@@ -2,29 +2,13 @@ require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
-const mongoose = require('mongoose')
+const Contact = require('./models/contact')
 
 app = express()
 app.use(express.json())
 app.use(cors())
 app.use(express.static('build'))
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-
-const contactSchema = new mongoose.Schema({
-    name: String,
-    number: String
-})
-
-const Contact = mongoose.model('Contact', contactSchema)
-
-contactSchema.set('toJSON',{
-    transform: (document, returnedObject) => {
-        returnedObject.id = returnedObject._id.toString()
-        delete returnedObject._id
-        delete returnedObject.__v
-    }
-})
 
 morgan.token('body', (req, res) => { return JSON.stringify(req.body) })
 
@@ -67,14 +51,13 @@ app.get('/api/persons/:id', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-    response.status(204).end()
+    Contact.deleteOne({"_id":request.params.id}).then(contact => {
+        response.status(204).end()
+    })
 })
 
 app.post('/api/persons', (request, response) => {
     const data = request.body
-    const duplicates = persons.filter(person => person.name === data.name)
 
     if (!data.name) {
         return response.status(400).json({
@@ -84,19 +67,15 @@ app.post('/api/persons', (request, response) => {
         return response.status(400).json({
             error: "a number must be provided"
         })
-    } else if (Array.isArray(duplicates) && duplicates.length) {
-        return response.status(400).json({
-            error: "name must be unique"
-        })
     } else {
-        const newPerson = {
+        const newContact = Contact({
             "name": data.name,
-            "number": data.number,
-            "id": Math.floor(Math.random() * Math.floor(60))
-        }
+            "number": data.number
+        })
 
-        persons = persons.concat(newPerson)
-        response.json(newPerson)
+        newContact.save().then(savedContact => {
+            response.json(savedContact)
+        })
     }
 })
 
