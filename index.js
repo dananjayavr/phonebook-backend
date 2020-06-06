@@ -61,7 +61,7 @@ app.delete('/api/persons/:id', (request, response, next) => {
         .catch(error => next(error))
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const data = request.body
 
     if (!data.name) {
@@ -94,7 +94,9 @@ app.use(unknownEndpoint)
 const errorHandler = (error, request, response, next) => {
     if(error.name === 'CastError') {
         return response.status(400).send({error:'malformatted id'})
-    }
+    } 
+
+    next(error)
 }
 app.use(errorHandler)
 
