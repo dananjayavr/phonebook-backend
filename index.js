@@ -4,31 +4,31 @@ const morgan = require('morgan')
 const cors = require('cors')
 const Contact = require('./models/contact')
 
-app = express()
+const app = express()
 app.use(express.json())
 app.use(cors())
 app.use(express.static('build'))
 
 
-morgan.token('body', (req, res) => { return JSON.stringify(req.body) })
+morgan.token('body', (req) => { return JSON.stringify(req.body) })
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 
-const generateId = () => {
+/* const generateId = () => {
     const ids = persons.map(person => person.id)
     return Math.max(...ids) + 1
-}
+} */
 
 
 // Custom Middleware
-const requestLogger = (request, response, next) => {
+/* const requestLogger = (request, response, next) => {
     console.log('Method: ', request.method)
     console.log('Path: ', request.path)
     console.log('Body: ', request.body)
     console.log('---')
     next()
-}
+} */
 //app.use(requestLogger)
 
 app.get('/info', (request, response) => {
@@ -45,16 +45,16 @@ app.get('/api/persons', (request, response) => {
 
 app.get('/api/persons/:id', (request, response, next) => {
     Contact.findById(request.params.id)
-    .then(contact => {
-        if(contact) {
-            response.json(contact)
-        } else {
-            response.status(404).end()
-        }
-    })
-    .catch(error => {
-        next(error)
-    })
+        .then(contact => {
+            if(contact) {
+                response.json(contact)
+            } else {
+                response.status(404).end()
+            }
+        })
+        .catch(error => {
+            next(error)
+        })
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
@@ -62,7 +62,7 @@ app.delete('/api/persons/:id', (request, response, next) => {
         response.status(204).end()
     }) */
     Contact.findByIdAndRemove(request.params.id)
-        .then(result => {
+        .then(() => {
             response.status(204).end()
         })
         .catch(error => next(error))
@@ -73,24 +73,24 @@ app.post('/api/persons', (request, response, next) => {
 
     if (!data.name) {
         return response.status(400).json({
-            error: "a name must be provided"
+            error: 'a name must be provided'
         })
     } else if (!data.number) {
         return response.status(400).json({
-            error: "a number must be provided"
+            error: 'a number must be provided'
         })
     } else {
         const newContact = Contact({
-            "name": data.name,
-            "number": data.number
+            'name': data.name,
+            'number': data.number
         })
 
         newContact.save().then(savedContact => {
             response.json(savedContact)
         })
-        .catch(error => {
-            next(error)
-        })
+            .catch(error => {
+                next(error)
+            })
     }
 })
 
@@ -102,7 +102,7 @@ app.put('/api/persons/:id',(request, response, next) => {
         number: body.number
     }
 
-    Contact.findByIdAndUpdate(request.params.id, contact, {new: true, runValidators: true, context: 'query'})
+    Contact.findByIdAndUpdate(request.params.id, contact, { new: true, runValidators: true, context: 'query' })
         .then(updatedContact => {
             response.json(updatedContact)
         })
@@ -118,10 +118,10 @@ app.use(unknownEndpoint)
 
 const errorHandler = (error, request, response, next) => {
     if(error.name === 'CastError') {
-        return response.status(400).send({error:'malformatted id'})
+        return response.status(400).send({ error:'malformatted id' })
     } else if(error.name === 'ValidationError') {
-        return response.status(400).json({error:error.message})
-    } 
+        return response.status(400).json({ error:error.message })
+    }
 
     next(error)
 }
