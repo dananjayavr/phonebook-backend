@@ -11,11 +11,23 @@ const contactSchema = new mongoose.Schema({
     name: {
         type: String,
         unique: true,
-        required: true
+        required: true,
+        validate: {
+            validator: function(v) {
+                return v.length > 3
+            },
+            message: props => `${props.value} is shorter than the minimum allowed length (3).`
+        }
     },
     number: {
         type: String,
-        required: true
+        required: true,
+        validate: {
+            validator: function(v) {
+                return v.length >= 8
+            },
+            message: props => `${props.value} is shorter than the minimum allowed length (8).`
+        }
     }
 })
 
